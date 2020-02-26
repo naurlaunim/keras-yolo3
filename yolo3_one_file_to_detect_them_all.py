@@ -6,8 +6,9 @@ from keras.layers.merge import add, concatenate
 from keras.models import Model
 import struct
 import cv2
+import sys
 
-np.set_printoptions(threshold=np.nan)
+np.set_printoptions(threshold=sys.maxsize)
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
@@ -378,10 +379,17 @@ def draw_boxes(image, boxes, labels, obj_thresh):
         
     return image      
 
-def _main_(args):
-    weights_path = args.weights
-    image_path   = args.image
+def make_model_with_weights(weights_path):
+    # make the yolov3 model to predict 80 classes on COCO
+    yolov3 = make_yolov3_model()
 
+    # load the weights trained on COCO into the model
+    weight_reader = WeightReader(weights_path)
+    weight_reader.load_weights(yolov3)
+
+    return yolov3
+
+def detect_from_image(image_path, yolov3):
     # set some parameters
     net_h, net_w = 416, 416
     obj_thresh, nms_thresh = 0.5, 0.45
@@ -396,13 +404,6 @@ def _main_(args):
               "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", \
               "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", \
               "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
-
-    # make the yolov3 model to predict 80 classes on COCO
-    yolov3 = make_yolov3_model()
-
-    # load the weights trained on COCO into the model
-    weight_reader = WeightReader(weights_path)
-    weight_reader.load_weights(yolov3)
 
     # preprocess the image
     image = cv2.imread(image_path)
@@ -428,6 +429,13 @@ def _main_(args):
  
     # write the image with bounding boxes to file
     cv2.imwrite(image_path[:-4] + '_detected' + image_path[-4:], (image).astype('uint8')) 
+
+def _main_(args):
+    weights_path = args.weights
+    image_path   = args.image
+
+    yolov3 = make_model_with_weights(weights_path)
+    detect_from_image(image_path, yolov3)
 
 if __name__ == '__main__':
     args = argparser.parse_args()
