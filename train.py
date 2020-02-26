@@ -2,19 +2,21 @@
 
 import argparse
 import os
-import numpy as np
 import json
+
+import numpy as np
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.optimizers import Adam
+from keras.models import load_model
+# import keras
+import tensorflow as tf
+
 from voc import parse_voc_annotation
 from yolo import create_yolov3_model, dummy_loss
 from generator import BatchGenerator
-from utils.utils import normalize, evaluate, makedirs
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from keras.optimizers import Adam
 from callbacks import CustomModelCheckpoint, CustomTensorBoard
+from utils.utils import normalize, evaluate, makedirs
 from utils.multi_gpu_model import multi_gpu_model
-import tensorflow as tf
-import keras
-from keras.models import load_model
 
 
 config = tf.compat.v1.ConfigProto(
@@ -172,9 +174,7 @@ def create_model(
 
     return train_model, infer_model
 
-def _main_(args):
-    config_path = args.conf
-
+def train(config_path):
     with open(config_path) as config_buffer:    
         config = json.loads(config_buffer.read())
 
@@ -280,6 +280,10 @@ def _main_(args):
     for label, average_precision in average_precisions.items():
         print(labels[label] + ': {:.4f}'.format(average_precision))
     print('mAP: {:.4f}'.format(sum(average_precisions.values()) / len(average_precisions)))           
+
+def _main_(args):
+    config_path = args.conf
+    train(config_path)
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='train and evaluate YOLO_v3 model on any dataset')

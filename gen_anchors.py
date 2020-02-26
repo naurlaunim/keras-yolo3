@@ -1,9 +1,10 @@
 import random
 import argparse
+import json
+
 import numpy as np
 
 from voc import parse_voc_annotation
-import json
 
 def IOU(ann, centroids):
     w, h = ann
@@ -84,10 +85,7 @@ def run_kmeans(ann_dims, anchor_num):
         prev_assignments = assignments.copy()
         old_distances = distances.copy()
 
-def _main_(argv):
-    config_path = args.conf
-    num_anchors = args.anchors
-
+def gen_anchors(config_path = 'config.json', num_anchors = 9):
     with open(config_path) as config_buffer:
         config = json.loads(config_buffer.read())
 
@@ -113,6 +111,11 @@ def _main_(argv):
     # write anchors to file
     print('\naverage IOU for', num_anchors, 'anchors:', '%0.2f' % avg_IOU(annotation_dims, centroids))
     print_anchors(centroids)
+
+def _main_(argv):
+    config_path = args.conf
+    num_anchors = args.anchors
+    gen_anchors(config_path, num_anchors)
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
